@@ -211,8 +211,7 @@ jobs:
       with:
         name: connection-info
         path: connection_info.txt
- 
-    
+     
   Deploy_EFK:
     needs: [Deploy_CloudFormation, Conexion_EC2, Deploy_Nginx]
     runs-on: ubuntu-latest
@@ -248,25 +247,42 @@ jobs:
           kubectl get pods
           kubectl get services
         '
-
+    
     - name: Get Kibana Service URL
       id: kibana-url
       run: |
-        EC2_IP=${{ needs.Deploy_CloudFormation.outputs.ec2_ip }}
-        KIBANA_URL=$(ssh -i jenkins.pem -o StrictHostKeyChecking=no ubuntu@$EC2_IP '
-          kubectl get service kibana -o jsonpath="{.status.loadBalancer.ingress[0].hostname}"
-        ')
-        echo "kibana_url=http://$KIBANA_URL" >> $GITHUB_OUTPUT
+          EC2_IP=${{ needs.Deploy_CloudFormation.outputs.ec2_ip }}
+          KIBANA_URL=$(ssh -i jenkins.pem -o StrictHostKeyChecking=no ubuntu@$EC2_IP '
+            kubectl get service kibana -o jsonpath="{.status.loadBalancer.ingress[0].hostname}"
+          ')
+          echo "kibana_url=http://$KIBANA_URL" >> $GITHUB_OUTPUT
+
+    - name: Download existing connection info
+      uses: actions/download-artifact@v3
+      with:
+        name: connection-info      
 
     - name: Update connection information
       run: |
-        echo "Kibana URL: ${{ steps.kibana-url.outputs.kibana_url }}" >> connection_info.txt
-
+          EC2_IP=${{ needs.Deploy_CloudFormation.outputs.ec2_ip }}
+          KIBANA_URL=${{ steps.kibana-url.outputs.kibana_url }}
+          
+          # Añadir nueva información al archivo existente
+          echo "Kibana URL: $KIBANA_URL" >> connection_info.txt
+          
+          echo "Service URLs:" >> connection_info.txt
+          ssh -i jenkins.pem -o StrictHostKeyChecking=no ubuntu@$EC2_IP '
+            echo "Nginx URL: http://$(kubectl get service nginx-service -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")" >> connection_info.txt
+            echo "Kibana URL: http://$(kubectl get service kibana -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")" >> connection_info.txt
+          '
+          
+          cat connection_info.txt
+  
     - name: Upload updated connection info
       uses: actions/upload-artifact@v3
       with:
-        name: connection-info
-        path: connection_info.txt
+          name: connection-info
+          path: connection_info.txt
 
   Setup_Remote_Access:
     needs: [Deploy_CloudFormation, Conexion_EC2, Deploy_Nginx, Deploy_EFK]
@@ -294,19 +310,3 @@ jobs:
       run: |
         chmod +x setup_remote_access.sh
         ./setup_remote_access.sh
-
-    - name: Upload kubeconfig
-      uses: actions/upload-artifact@v3
-      with:
-        name: kubeconfig
-        path: kubeconfig
-
-    - name: Update connection information
-      run: |
-        echo "Kubeconfig file: Download the 'kubeconfig' artifact and use it to connect to the EKS cluster from Lens" >> connection_info.txt
-
-    - name: Upload updated connection info
-      uses: actions/upload-artifact@v3
-      with:
-        name: connection-info
-        path: connection_info.txt
