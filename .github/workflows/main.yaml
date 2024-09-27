@@ -61,11 +61,11 @@ jobs:
       with:
         name: ssh-key
 
-    # - name: Download CloudFormation template
-    #   uses: actions/download-artifact@v3
-    #   with:
-    #     name: cloudformation-template
-    #     path: cloudformation
+    - name: Download CloudFormation template
+      uses: actions/download-artifact@v3
+      with:
+        name: cloudformation-template
+        path: cloudformation
 
     - name: Deploy CloudFormation stack
       id: deploy-cfn     
