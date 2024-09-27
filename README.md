@@ -78,6 +78,14 @@ Este proyecto automatiza el despliegue de un cluster Amazon EKS (Elastic Kuberne
     Después de ejecutar el comando anterior, kubectl debería estar configurado para comunicarse con su cluster EKS. Puede verificar la conexión con:
             kubectl get nodes
 
+            kubectl get pods -l app=nginx
+    
+    Acceder al Pod
+            kubectl exec -it <nombre-del-pod> -- /bin/bash
+
+    Desde aca podemos modificar la pagina default de Nginx
+            cd /usr/share/nginx/html
+
 ### Usando Lens
 
 1. Instalar [Lens](https://k8slens.dev/) en tu máquina local.
