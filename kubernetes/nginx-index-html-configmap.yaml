@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-index-html
+data:
+  index.html: |
+    <html>
+    <body>
+    <h1>Bienvenido a mi sitio personalizado</h1>
+    <p>Esta es mi nueva página de inicio servida por Nginx en AWS EKS.</p>
+    </body>
+    </html>
