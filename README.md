@@ -6,7 +6,7 @@ Este proyecto automatiza el despliegue de un cluster Amazon EKS (Elastic Kuberne
 
 ├── .github
 │ └── workflows
-│ └── main.yaml
+│ └── main.yamy
 ├── cloudformation
 │ └── ec2-stack.yaml
 ├── kubernetes
