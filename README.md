@@ -103,28 +103,28 @@ El proyecto incluye Prometheus para la recolección de métricas y Grafana para 
 
 ### Prometheus:
 
-    Prometheus ya esta configurado para recopilar métricas básicas del cluster Kubernetes.
-    Para añadir más objetivos de scraping, se debe modificar el ConfigMap de Prometheus con:
+Prometheus ya esta configurado para recopilar métricas básicas del cluster Kubernetes.
+Para añadir más objetivos de scraping, se debe modificar el ConfigMap de Prometheus con:
 
         kubectl edit configmap prometheus-server
 
 ### Grafana:
 
-    Grafana ya esta configurado con una instalación básica.
-    Para configurar Grafana:
-        Acceder a la URL de Grafana proporcionada en el archivo connection-info.txt.
-        Iniciar sesión con el nombre de usuario "admin" y la contraseña proporcionada en connection-info.txt.
-        Ve a "Configuration" > "Data Sources" y añadir Prometheus como fuente de datos:
+Grafana ya esta configurado con una instalación básica.
+Para configurar Grafana:
+    Acceder a la URL de Grafana proporcionada en el archivo connection-info.txt.
+    Iniciar sesión con el nombre de usuario "admin" y la contraseña proporcionada en connection-info.txt.
+    Ve a "Configuration" > "Data Sources" y añadir Prometheus como fuente de datos:
             URL: http://prometheus-server
             Access: Server (default)
-        Importar dashboards preconfigurados o crear los propios.
+    Importar dashboards preconfigurados o crear los propios.
 
 ### Explicación de la configuración:
 
-    Prometheus se despliega con su configuración predeterminada, que incluye la recopilación de métricas del cluster Kubernetes.
-    Grafana se despliega con un LoadBalancer para acceso externo.
-    Las URLs de Prometheus y Grafana, así como la contraseña de administrador de Grafana, se añaden al archivo connection-info.txt.
-    Prometheus recopila métricas, que luego pueden visualizarse en Grafana.
+Prometheus se despliega con su configuración predeterminada, que incluye la recopilación de métricas del cluster Kubernetes.
+Grafana se despliega con un LoadBalancer para acceso externo.
+Las URLs de Prometheus y Grafana, así como la contraseña de administrador de Grafana, se añaden al archivo connection-info.txt.
+Prometheus recopila métricas, que luego pueden visualizarse en Grafana.
 
 ## Accediendo a Kibana
 
