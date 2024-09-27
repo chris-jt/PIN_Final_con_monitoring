@@ -37,11 +37,11 @@ jobs:
           jenkins.pem
           jenkins.pub
 
-    - name: Upload CloudFormation template
-      uses: actions/upload-artifact@v3
-      with:
-        name: cloudformation-template
-        path: cloudformation/ec2-stack.yaml
+    # - name: Upload CloudFormation template
+    #   uses: actions/upload-artifact@v3
+    #   with:
+    #     name: cloudformation-template
+    #     path: cloudformation/ec2-stack.yaml
 
   Deploy_CloudFormation:
     needs: Credenciales
@@ -61,11 +61,11 @@ jobs:
       with:
         name: ssh-key
 
-    - name: Download CloudFormation template
-      uses: actions/download-artifact@v3
-      with:
-        name: cloudformation-template
-        path: cloudformation
+    # - name: Download CloudFormation template
+    #   uses: actions/download-artifact@v3
+    #   with:
+    #     name: cloudformation-template
+    #     path: cloudformation
 
     - name: Deploy CloudFormation stack
       id: deploy-cfn     
@@ -105,13 +105,13 @@ jobs:
         region=${{ env.AWS_REGION }}" > ~/.aws/credentials
         '
 
-    - name: Upload SSH key and connection info
-      uses: actions/upload-artifact@v3
-      with:
-        name: ssh-key-and-info
-        path: |
-          jenkins.pem
-          connection_info.txt
+    # - name: Upload SSH key and connection info
+    #   uses: actions/upload-artifact@v3
+    #   with:
+    #     name: ssh-key-and-info
+    #     path: |
+    #       jenkins.pem
+    #       connection_info.txt
 
   Conexion_EC2:
     needs: Deploy_CloudFormation
@@ -163,7 +163,7 @@ jobs:
       run: |
         EC2_IP=${{ needs.Deploy_CloudFormation.outputs.ec2_ip }}
         # Copiar archivos al EC2        
-        scp -i jenkins.pem -o StrictHostKeyChecking=no kubernetes/nginx-deployment.yaml kubernetes/nginx-service.yaml ubernetes/nginx-index-html-configmap.yaml ubuntu@$EC2_IP:~
+        scp -i jenkins.pem -o StrictHostKeyChecking=no kubernetes/nginx-deployment.yaml kubernetes/nginx-service.yaml kubernetes/nginx-index-html-configmap.yaml ubuntu@$EC2_IP:~
         
         # Configurar kubectl en el EC2 y aplicar los archivos
         ssh -i jenkins.pem -o StrictHostKeyChecking=no ubuntu@$EC2_IP '
@@ -311,3 +311,14 @@ jobs:
       run: |
         chmod +x setup_remote_access.sh
         ./setup_remote_access.sh
+
+  Trigger_Cleanup_If_Failed:
+    needs: [Setup_Remote_Access]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+    - name: Trigger cleanup workflow
+      uses: peter-evans/repository-dispatch@v2
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        event-type: trigger-cleanup

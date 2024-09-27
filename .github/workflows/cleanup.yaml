@@ -1,0 +1,71 @@
+name: Cleanup Resources
+
+on:
+    workflow_dispatch:
+      inputs:
+        confirm_cleanup:
+          description: 'Type "CONFIRM" to proceed with cleanup'
+          required: true
+   # schedule:
+   #   - cron: '0 1 * * *'  # Ejecuta diariamente a la 1 AM UTC
+    repository_dispatch:
+      types: [trigger-cleanup]
+
+env:
+  AWS_REGION: us-east-1
+  CLUSTER_NAME: cluster-PIN 
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Check if cleanup is needed
+      id: check-cleanup
+      run: |
+        if aws cloudformation describe-stacks --stack-name jenkins-ec2-stack 2>/dev/null; then
+          echo "cleanup_needed=true" >> $GITHUB_OUTPUT
+        else
+          echo "cleanup_needed=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Cleanup resources
+      if: |
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.confirm_cleanup == 'CONFIRM') ||
+        (github.event_name == 'schedule' && steps.check-cleanup.outputs.cleanup_needed == 'true')
+      run: |
+        # Eliminar el stack de CloudFormation
+        aws cloudformation delete-stack --stack-name jenkins-ec2-stack
+
+        # Esperar a que el stack se elimine completamente
+        aws cloudformation wait stack-delete-complete --stack-name jenkins-ec2-stack
+
+        # Eliminar el cluster EKS si existe
+        if aws eks describe-cluster --name ${{ env.CLUSTER_NAME }} 2>/dev/null; then
+          echo "Eliminando cluster EKS..."
+          aws eks delete-cluster --name ${{ env.CLUSTER_NAME }}
+          
+          # Esperar a que el cluster se elimine completamente
+          while aws eks describe-cluster --name ${{ env.CLUSTER_NAME }} 2>/dev/null; do
+            echo "Esperando que el cluster se elimine..."
+            sleep 60
+          done
+        else
+          echo "El cluster EKS no existe o ya ha sido eliminado."
+        fi
+
+        echo "Limpieza completada."
+
+    - name: Notify about cleanup
+      run: |
+        if [ "${{ steps.check-cleanup.outputs.cleanup_needed }}" = "true" ]; then
+          echo "Se ha realizado la limpieza de recursos."
+        else
+          echo "No se requirió limpieza de recursos."
+        fi
