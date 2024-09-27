@@ -74,7 +74,7 @@ data:
         </div>
         
         <div class="info-item">
-            <strong>Versión de Kubernetes:</strong> 1.24
+            <strong>Versión de Kubernetes:</strong> 1.30
         </div>
     </div>
     </body>

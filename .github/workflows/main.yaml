@@ -311,14 +311,3 @@ jobs:
       run: |
         chmod +x setup_remote_access.sh
         ./setup_remote_access.sh
-
-  Trigger_Cleanup_If_Failed:
-    needs: [Setup_Remote_Access]
-    if: failure()
-    runs-on: ubuntu-latest
-    steps:
-    - name: Trigger cleanup workflow
-      uses: peter-evans/repository-dispatch@v2
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        event-type: trigger-cleanup
