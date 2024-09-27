@@ -23,7 +23,7 @@ Este proyecto automatiza el despliegue de un cluster Amazon EKS (Elastic Kuberne
 
 ## Componentes
 
-. **Flujo de trabajo de GitHub Actions** (`main.yaml`): Orquesta todo el proceso de despliegue.
+1. **Flujo de trabajo de GitHub Actions** (`main.yaml`): Orquesta todo el proceso de despliegue.
 2. **Plantilla de CloudFormation** (`ec2-stack.yaml`): Define la instancia EC2 utilizada para gestionar el cluster EKS.
 3. **Manifiestos de Kubernetes**: Definen los despliegues para Elasticsearch, Fluent Bit, Kibana, Nginx, Prometheus y Grafana.
 4. **Script de User Data de EC2** (`ec2_user_data.sh`): Configura la instancia EC2 con las herramientas necesarias, crea el cluster EKS e instala Prometheus y Grafana.
@@ -115,13 +115,14 @@ Grafana ya esta configurado con una instalación básica.
 
 Para configurar Grafana:
 
-    Acceder a la URL de Grafana proporcionada en el archivo connection-info.txt.
-    Iniciar sesión con el nombre de usuario "admin" y la contraseña proporcionada en connection-info.txt.
+Acceder a la URL de Grafana proporcionada en el archivo connection-info.txt.
+Iniciar sesión con el nombre de usuario "admin" y la contraseña proporcionada en connection-info.txt.
 
-    Ve a "Configuration" > "Data Sources" y añadir Prometheus como fuente de datos:
+Ve a "Configuration" > "Data Sources" y añadir Prometheus como fuente de datos:
             URL: http://prometheus-server
             Access: Server (default)
-    Importar dashboards preconfigurados o crear los propios.
+
+Importar dashboards preconfigurados o crear los propios.
 
 ### Explicación de la configuración:
 
