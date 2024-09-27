@@ -4,9 +4,78 @@ metadata:
   name: nginx-index-html
 data:
   index.html: |
-    <html>
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Bienvenido a Nuestro Proyecto</title>
+      <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #3498db;
+            color: #fff;
+            text-align: center;
+            padding: 1rem;
+            border-radius: 5px;
+        }
+        h1 {
+            margin-bottom: 0;
+        }
+        .container {
+            background-color: #fff;
+            border-radius: 5px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .info-item {
+            margin-bottom: 15px;
+        }
+        .info-item strong {
+            color: #3498db;
+        }
+      </style>
+    </head>
     <body>
-    <h1>Bienvenido a mi sitio personalizado</h1>
-    <p>Esta es mi nueva página de inicio servida por Nginx en AWS EKS.</p>
+    <header>
+        <h1>Bienvenido a Nuestro Proyecto</h1>
+    </header>
+    
+    <div class="container">
+        <h2>Información del Proyecto</h2>
+        
+        <div class="info-item">
+            <strong>Alojamiento:</strong> Esta página está alojada en un cluster de Kubernetes (EKS) en Amazon Web Services (AWS).
+        </div>
+        
+        <div class="info-item">
+            <strong>Servidor Web:</strong> Estamos utilizando Nginx como servidor web para servir esta página.
+        </div>
+        
+        <div class="info-item">
+            <strong>Despliegue:</strong> El despliegue se realiza mediante un pipeline de CI/CD utilizando GitHub Actions.
+        </div>
+        
+        <div class="info-item">
+            <strong>Monitorización:</strong> Utilizamos el stack EFK (Elasticsearch, Fluentd, Kibana) para la recopilación y visualización de logs.
+        </div>
+        
+        <div class="info-item">
+            <strong>Región de AWS:</strong> us-east-1
+        </div>
+        
+        <div class="info-item">
+            <strong>Versión de Kubernetes:</strong> 1.24
+        </div>
+    </div>
     </body>
     </html>
