@@ -113,6 +113,11 @@ helm version
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
 
+# Install Grafana
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+helm install grafana grafana/grafana
+
 # Asegurarse de que las configuraciones estén disponibles para el usuario ubuntu
 mkdir -p /home/ubuntu/.kube
 mkdir -p /root/.kube

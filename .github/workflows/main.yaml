@@ -206,13 +206,43 @@ jobs:
         EC2_IP=${{ needs.Deploy_CloudFormation.outputs.ec2_ip }}
         NGINX_IP=$(ssh -i jenkins.pem -o StrictHostKeyChecking=no ubuntu@$EC2_IP 'kubectl get services nginx-service -o jsonpath="{.status.loadBalancer.ingress[0].hostname}"')
         echo "nginx_ip=$NGINX_IP" >> $GITHUB_OUTPUT
-
+    
+    - name: Deploy Prometheus and Grafana
+      run: |
+          EC2_IP=${{ needs.Deploy_CloudFormation.outputs.ec2_ip }}
+          ssh -i jenkins.pem -o StrictHostKeyChecking=no ubuntu@$EC2_IP '
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add grafana https://grafana.github.io/helm-charts
+          helm repo update
+          helm install prometheus prometheus-community/prometheus
+          helm install grafana grafana/grafana --set service.type=LoadBalancer
+          
+          # Esperar a que los servicios estén disponibles
+          kubectl rollout status deployment/prometheus-server
+          kubectl rollout status deployment/grafana
+  
+          # Obtener las URLs de Prometheus y Grafana
+          PROMETHEUS_URL=$(kubectl get svc prometheus-server -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
+          GRAFANA_URL=$(kubectl get svc grafana -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
+          
+          # Obtener la contraseña de administrador de Grafana
+          GRAFANA_PASSWORD=$(kubectl get secret --namespace default grafana -o jsonpath="{.data.admin-password}" | base64 --decode)
+          
+          # Añadir las URLs y la contraseña al archivo de conexión
+          echo "Prometheus URL: http://$PROMETHEUS_URL:9090" >> connection-info.txt
+          echo "Grafana URL: http://$GRAFANA_URL" >> connection-info.txt
+          echo "Grafana admin password: $GRAFANA_PASSWORD" >> connection-info.txt
+          '
+          
+          # Copiar el archivo de conexión actualizado de vuelta a la máquina del flujo de trabajo
+          scp -i jenkins.pem ubuntu@$EC2_IP:~/connection-info.txt .
+  
     - name: Upload connection info
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v2
       with:
         name: connection-info
-        path: connection_info.txt
-     
+        path: connection-info.txt  
+
   Deploy_EFK:
     needs: [Deploy_CloudFormation, Conexion_EC2, Deploy_Nginx]
     runs-on: ubuntu-latest
@@ -231,11 +261,11 @@ jobs:
     - name: Deploy EFK Stack
       run: |
         EC2_IP=${{ needs.Deploy_CloudFormation.outputs.ec2_ip }}
-        scp -i jenkins.pem -o StrictHostKeyChecking=no kubernetes/elasticsearch-deployment.yaml kubernetes/fluentbit-configmap.yaml kubernetes/fluentbit-deployment.yaml kubernetes/kibana-deployment.yaml ubuntu@$EC2_IP:~
+        scp -i jenkins.pem -o StrictHostKeyChecking=no kubernetes/elasticsearch-deployment.yaml kubernetes/fluentd-configmap.yaml kubernetes/fluentd-deployment.yaml kubernetes/kibana-deployment.yaml ubuntu@$EC2_IP:~
         ssh -i jenkins.pem -o StrictHostKeyChecking=no ubuntu@$EC2_IP '
           kubectl apply -f elasticsearch-deployment.yaml
-          kubectl apply -f fluentbit-configmap.yaml
-          kubectl apply -f fluentbit-deployment.yaml
+          kubectl apply -f fluentd-configmap.yaml
+          kubectl apply -f fluentd-deployment.yaml
           kubectl apply -f kibana-deployment.yaml
           
           # Esperar a que los pods estén listos

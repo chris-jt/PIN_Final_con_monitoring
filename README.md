@@ -11,9 +11,10 @@ Este proyecto automatiza el despliegue de un cluster Amazon EKS (Elastic Kuberne
 │ └── ec2-stack.yaml
 ├── kubernetes
 │ ├── elasticsearch-deployment.yaml
-│ ├── fluentbit-configmap.yaml
-│ ├── fluentbit-deployment.yaml
+│ ├── fluentd-configmap.yaml
+│ ├── fluentd-deployment.yaml
 │ ├── kibana-deployment.yaml
+│ ├── nginx-index-html-configmap.yaml
 │ ├── nginx-deployment.yaml
 │ └── nginx-service.yaml
 ├── ec2_user_data.sh
@@ -22,10 +23,10 @@ Este proyecto automatiza el despliegue de un cluster Amazon EKS (Elastic Kuberne
 
 ## Componentes
 
-1. **Flujo de trabajo de GitHub Actions** (`main.yaml`): Orquesta todo el proceso de despliegue.
+. **Flujo de trabajo de GitHub Actions** (`main.yaml`): Orquesta todo el proceso de despliegue.
 2. **Plantilla de CloudFormation** (`ec2-stack.yaml`): Define la instancia EC2 utilizada para gestionar el cluster EKS.
-3. **Manifiestos de Kubernetes**: Definen los despliegues para Elasticsearch, Fluent Bit, Kibana y Nginx.
-4. **Script de User Data de EC2** (`ec2_user_data.sh`): Configura la instancia EC2 con las herramientas necesarias y crea el cluster EKS.
+3. **Manifiestos de Kubernetes**: Definen los despliegues para Elasticsearch, Fluent Bit, Kibana, Nginx, Prometheus y Grafana.
+4. **Script de User Data de EC2** (`ec2_user_data.sh`): Configura la instancia EC2 con las herramientas necesarias, crea el cluster EKS e instala Prometheus y Grafana.
 5. **Script de Configuración de Acceso Remoto** (`setup_remote_access.sh`): Configura el acceso remoto a la instancia EC2.
 
 ## Prerrequisitos
@@ -96,6 +97,10 @@ Este proyecto automatiza el despliegue de un cluster Amazon EKS (Elastic Kuberne
 3. En Lens, añade un nuevo cluster y pega la configuración copiada.
 4. Conéctate al cluster a través de Lens.
 
+## Monitoreo
+
+El proyecto incluye Prometheus para la recolección de métricas y Grafana para la visualización. Puedes acceder a la interfaz de Grafana a través del LoadBalancer creado para el servicio de Grafana. La contraseña predeterminada para el usuario admin es "admin", pero se recomienda cambiarla después del primer inicio de sesión.
+
 ## Accediendo a Kibana
 
 1. Obtén la IP externa del servicio de Kibana:
@@ -108,68 +113,38 @@ Este proyecto automatiza el despliegue de un cluster Amazon EKS (Elastic Kuberne
 
 ## Visualizando Logs
 
-1. En Kibana, ve a "Discover" en la barra lateral izquierda.
-2. Crea un patrón de índice (por ejemplo, `fluent-bit-*`).
-3. Ahora deberías poder ver y buscar logs de tu cluster.
+1. Ir a "Management" > "Stack Management" > "Index Patterns"
+2. Crear un nuevo index pattern con el patrón "nginx-logs-*"
+3. Ir a "Discover" en el menú principal
+4. Seleccionar el index pattern y ver los logs de la aplicación Nginx
 
-    Para aprovechar al máximo el stack EFK (Elasticsearch, Fluent Bit, Kibana) para monitorear tu pod con Nginx, sigue estos pasos:
+    Para aprovechar al máximo el stack EFK (Elasticsearch, Fluent, Kibana) para monitorear tu pod con Nginx, sigue estos pasos:
 
-    Asegúrate de que Fluent Bit está recolectando logs:
-    Verifica que el ConfigMap de Fluent Bit incluya la configuración para recolectar logs de todos los pods, incluyendo Nginx. Esto generalmente ya está configurado en el archivo fluentbit-configmap.yaml.
+    Asegúrate de que Fluent está recolectando logs:
+    Verificar que el ConfigMap de Fluent incluya la configuración para recolectar logs de todos los pods, incluyendo Nginx. Esto generalmente ya está configurado en el archivo fluentd-configmap.yaml.
 
-    Accede a Kibana:
-    Obtén la IP externa del servicio de Kibana:
+    Acceder a Kibana:
+    Obtener la IP externa del servicio de Kibana:
 
     kubectl get service kibana
 
     Abre un navegador y navega a http://<IP_EXTERNA_KIBANA>.
 
-    Configura un índice en Kibana:
-
-    Ve a "Stack Management" > "Index Patterns".
-    Crea un nuevo patrón de índice (por ejemplo, fluent-bit-*).
-    Selecciona @timestamp como el campo de tiempo.
-
-    Explora los logs:
-
-    Ve a "Discover" en el menú principal.
-    Selecciona el patrón de índice que creaste.
     Usa la barra de búsqueda para filtrar logs específicos de Nginx. Por ejemplo:
 
     kubernetes.labels.app: nginx
 
-    Crea visualizaciones:
+    Crear visualizaciones:
 
-    Ve a "Visualize" y crea nuevas visualizaciones. Algunas ideas:
+    Ir a "Visualize" y crear nuevas visualizaciones. Algunas ideas:
         Gráfico de barras de códigos de respuesta HTTP.
         Gráfico de líneas de solicitudes por minuto.
         Tabla de las URLs más solicitadas.
 
-    Crea un dashboard:
+    Crear un dashboard:
 
-    Ve a "Dashboard" y crea uno nuevo.
+    Ir a "Dashboard" y crea uno nuevo.
     Añade las visualizaciones que creaste.
-
-    Configura alertas:
-
-    Usa la funcionalidad de alertas de Kibana para notificaciones sobre eventos específicos, como errores 500.
-
-    Monitorea métricas específicas de Nginx:
-
-    Considera usar un exportador de métricas de Nginx para Prometheus si necesitas métricas más detalladas.
-
-    Analiza los logs de acceso de Nginx:
-
-    Busca patrones en las solicitudes de los usuarios.
-    Identifica picos de tráfico o comportamientos inusuales.
-
-    Monitorea errores:
-
-    Configura una búsqueda para errores específicos de Nginx (por ejemplo, códigos 4xx y 5xx).
-
-    Configura retención de logs:
-
-    Ajusta la retención de logs en Elasticsearch según tus necesidades.
 
 ## Limpieza
 
