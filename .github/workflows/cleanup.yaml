@@ -14,6 +14,7 @@ on:
 env:
   AWS_REGION: us-east-1
   CLUSTER_NAME: cluster-PIN 
+  STACK_NAME: jenkins-ec2-stack
 
 jobs:
   cleanup:
@@ -29,7 +30,7 @@ jobs:
     - name: Check if cleanup is needed
       id: check-cleanup
       run: |
-        if aws cloudformation describe-stacks --stack-name jenkins-ec2-stack 2>/dev/null; then
+        if aws cloudformation describe-stacks --stack-name ${{env.STACK_NAME}} 2>/dev/null; then
           echo "cleanup_needed=true" >> $GITHUB_OUTPUT
         else
           echo "cleanup_needed=false" >> $GITHUB_OUTPUT
@@ -40,16 +41,10 @@ jobs:
         (github.event_name == 'workflow_dispatch' && github.event.inputs.confirm_cleanup == 'CONFIRM') ||
         (github.event_name == 'schedule' && steps.check-cleanup.outputs.cleanup_needed == 'true')
       run: |
-        # Eliminar el stack de CloudFormation
-        aws cloudformation delete-stack --stack-name jenkins-ec2-stack
-
-        # Esperar a que el stack se elimine completamente
-        aws cloudformation wait stack-delete-complete --stack-name jenkins-ec2-stack
-
         # Eliminar el cluster EKS si existe
         if aws eks describe-cluster --name ${{ env.CLUSTER_NAME }} 2>/dev/null; then
           echo "Eliminando cluster EKS..."
-          aws eks delete-cluster --name ${{ env.CLUSTER_NAME }}
+          eksctl delete cluster --name ${{ env.CLUSTER_NAME }} --region ${{ env.AWS_REGION }}         
           
           # Esperar a que el cluster se elimine completamente
           while aws eks describe-cluster --name ${{ env.CLUSTER_NAME }} 2>/dev/null; do
@@ -60,6 +55,11 @@ jobs:
           echo "El cluster EKS no existe o ya ha sido eliminado."
         fi
 
+        # Eliminar el stack de CloudFormation
+        aws cloudformation delete-stack --stack-name jenkins-ec2-stack --region ${{ env.AWS_REGION }} 
+
+        # Esperar a que el stack se elimine completamente
+        aws cloudformation wait stack-delete-complete --stack-name ${{env.STACK_NAME}}
         echo "Limpieza completada."
 
     - name: Notify about cleanup
