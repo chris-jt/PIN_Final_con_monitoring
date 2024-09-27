@@ -37,11 +37,11 @@ jobs:
           jenkins.pem
           jenkins.pub
 
-    # - name: Upload CloudFormation template
-    #   uses: actions/upload-artifact@v3
-    #   with:
-    #     name: cloudformation-template
-    #     path: cloudformation/ec2-stack.yaml
+    - name: Upload CloudFormation template
+      uses: actions/upload-artifact@v3
+      with:
+        name: cloudformation-template
+        path: cloudformation/ec2-stack.yaml
 
   Deploy_CloudFormation:
     needs: Credenciales
