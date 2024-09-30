@@ -238,7 +238,7 @@ jobs:
           scp -i jenkins.pem ubuntu@$EC2_IP:~/connection-info.txt .
   
     - name: Upload connection info
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: connection-info
         path: connection-info.txt  
