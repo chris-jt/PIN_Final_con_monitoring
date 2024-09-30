@@ -209,39 +209,46 @@ jobs:
     
     - name: Deploy Prometheus and Grafana
       run: |
-          EC2_IP=${{ needs.Deploy_CloudFormation.outputs.ec2_ip }}
-          ssh -i jenkins.pem -o StrictHostKeyChecking=no ubuntu@$EC2_IP '
-          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-          helm repo add grafana https://grafana.github.io/helm-charts
-          helm repo update
-          helm install prometheus prometheus-community/prometheus
-          helm install grafana grafana/grafana --set service.type=LoadBalancer
-          
-          # Esperar a que los servicios estén disponibles
-          kubectl rollout status deployment/prometheus-server
-          kubectl rollout status deployment/grafana
-  
-          # Obtener las URLs de Prometheus y Grafana
-          PROMETHEUS_URL=$(kubectl get svc prometheus-server -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
-          GRAFANA_URL=$(kubectl get svc grafana -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
-          
-          # Obtener la contraseña de administrador de Grafana
-          GRAFANA_PASSWORD=$(kubectl get secret --namespace default grafana -o jsonpath="{.data.admin-password}" | base64 --decode)
-          
-          # Añadir las URLs y la contraseña al archivo de conexión
-          echo "Prometheus URL: http://$PROMETHEUS_URL:9090" >> connection-info.txt
-          echo "Grafana URL: http://$GRAFANA_URL" >> connection-info.txt
-          echo "Grafana admin password: $GRAFANA_PASSWORD" >> connection-info.txt
-          '
-          
-          # Copiar el archivo de conexión actualizado de vuelta a la máquina del flujo de trabajo
-          scp -i jenkins.pem ubuntu@$EC2_IP:~/connection-info.txt .
-  
+      EC2_IP=${{ needs.Deploy_CloudFormation.outputs.ec2_ip }}
+      ssh -i jenkins.pem -o StrictHostKeyChecking=no ubuntu@$EC2_IP '
+      helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+      helm repo add grafana https://grafana.github.io/helm-charts
+      helm repo update
+    
+      # Generar un timestamp único
+      TIMESTAMP=$(date +%s)
+    
+      # Instalar o actualizar Prometheus
+      helm upgrade --install prometheus-$TIMESTAMP prometheus-community/prometheus --force
+    
+      # Instalar o actualizar Grafana
+      helm upgrade --install grafana-$TIMESTAMP grafana/grafana --set service.type=LoadBalancer --force
+    
+      # Esperar a que los servicios estén disponibles
+      kubectl rollout status deployment/prometheus-$TIMESTAMP-server
+      kubectl rollout status deployment/grafana-$TIMESTAMP
+    
+      # Obtener las URLs de Prometheus y Grafana
+      PROMETHEUS_URL=$(kubectl get svc prometheus-$TIMESTAMP-server -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
+      GRAFANA_URL=$(kubectl get svc grafana-$TIMESTAMP -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
+    
+      # Obtener la contraseña de administrador de Grafana
+      GRAFANA_PASSWORD=$(kubectl get secret --namespace default grafana-$TIMESTAMP -o jsonpath="{.data.admin-password}" | base64 --decode)
+    
+      # Añadir las URLs y la contraseña al archivo de conexión
+      echo "Prometheus URL: http://$PROMETHEUS_URL:9090" >> connection-info.txt
+      echo "Grafana URL: http://$GRAFANA_URL" >> connection-info.txt
+      echo "Grafana admin password: $GRAFANA_PASSWORD" >> connection-info.txt
+      '
+    
+      # Copiar el archivo de conexión actualizado de vuelta a la máquina del flujo de trabajo
+      scp -i jenkins.pem ubuntu@$EC2_IP:~/connection-info.txt .
+
     - name: Upload connection info
       uses: actions/upload-artifact@v3
       with:
         name: connection-info
-        path: connection-info.txt  
+        path: connection-info.txt
 
   Deploy_EFK:
     needs: [Deploy_CloudFormation, Conexion_EC2, Deploy_Nginx]
