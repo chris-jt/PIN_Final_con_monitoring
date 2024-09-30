@@ -6,17 +6,19 @@ Este proyecto automatiza el despliegue de un cluster Amazon EKS (Elastic Kuberne
 
 ├── .github
 │ └── workflows
-│ └── main.yamy
+│       └── main.yaml
 ├── cloudformation
 │ └── ec2-stack.yaml
 ├── kubernetes
 │ ├── elasticsearch-deployment.yaml
 │ ├── fluentd-configmap.yaml
 │ ├── fluentd-deployment.yaml
+│ ├── grafana-deployment.yaml
 │ ├── kibana-deployment.yaml
 │ ├── nginx-index-html-configmap.yaml
 │ ├── nginx-deployment.yaml
-│ └── nginx-service.yaml
+│ ├── nginx-service.yaml
+│ └── prometheus-deployment.yaml
 ├── ec2_user_data.sh
 ├── setup_remote_access.sh
 └── README.md
@@ -25,7 +27,7 @@ Este proyecto automatiza el despliegue de un cluster Amazon EKS (Elastic Kuberne
 
 1. **Flujo de trabajo de GitHub Actions** (`main.yaml`): Orquesta todo el proceso de despliegue.
 2. **Plantilla de CloudFormation** (`ec2-stack.yaml`): Define la instancia EC2 utilizada para gestionar el cluster EKS.
-3. **Manifiestos de Kubernetes**: Definen los despliegues para Elasticsearch, Fluent Bit, Kibana, Nginx, Prometheus y Grafana.
+3. **Manifiestos de Kubernetes**: Definen los despliegues para Elasticsearch, Fluentd, Kibana, Nginx, Prometheus y Grafana.
 4. **Script de User Data de EC2** (`ec2_user_data.sh`): Configura la instancia EC2 con las herramientas necesarias, crea el cluster EKS e instala Prometheus y Grafana.
 5. **Script de Configuración de Acceso Remoto** (`setup_remote_access.sh`): Configura el acceso remoto a la instancia EC2.
 
@@ -37,7 +39,7 @@ Este proyecto automatiza el despliegue de un cluster Amazon EKS (Elastic Kuberne
 
 ## Configuración y Despliegue
 
-1. Haz un fork de este repositorio a tu cuenta de GitHub.
+1. Hacer un fork de este repositorio a tu cuenta de GitHub.
 
 2. Configura los siguientes Secretos de GitHub en tu repositorio forkeado:
    - `AWS_ACCESS_KEY_ID`: Tu ID de clave de acceso de AWS
@@ -76,7 +78,7 @@ Este proyecto automatiza el despliegue de un cluster Amazon EKS (Elastic Kuberne
     Tener instalado kubectl
             aws eks update-kubeconfig --region <region> --name <cluster-name>
     
-    Después de ejecutar el comando anterior, kubectl debería estar configurado para comunicarse con su cluster EKS. Puede verificar la conexión con:
+    Después de ejecutar el comando anterior, kubectl debería estar configurado para comunicarse con su  cluster EKS. Puede verificar la conexión con:
             kubectl get nodes
 
             kubectl get pods -l app=nginx
@@ -99,7 +101,7 @@ Este proyecto automatiza el despliegue de un cluster Amazon EKS (Elastic Kuberne
 
 ## Monitoreo
 
-El proyecto incluye Prometheus para la recolección de métricas y Grafana para la visualización. Puedes acceder a la interfaz de Grafana a través del LoadBalancer creado para el servicio de Grafana. La contraseña predeterminada para el usuario admin es "admin", pero se recomienda cambiarla después del primer inicio de sesión.
+El proyecto incluye Prometheus para la recolección de métricas y Grafana para la visualización. Se puede acceder a la interfaz de Grafana a través del LoadBalancer creado para el servicio de Grafana. La contraseña predeterminada para el usuario admin es "admin", pero se recomienda cambiarla después del primer inicio de sesión.
 
 ### Prometheus:
 
@@ -193,9 +195,9 @@ aws cloudformation delete-stack --stack-name jenkins-ec2-stack --region <REGION_
 
 ## Solución de Problemas
 
-- Si encuentras problemas con la creación del cluster, revisa el log del sistema de la instancia EC2 para una salida detallada.
-- Asegúrate de que tu cuenta de AWS tenga permisos suficientes para crear y gestionar clusters EKS.
-- Si Kibana no es accesible, verifica que el servicio de Kibana esté ejecutándose y tenga una IP externa asignada.
+- Si se encuentran problemas con la creación del cluster, revisar el log del sistema de la instancia EC2 para una salida detallada.
+- Asegurarse de que la cuenta de AWS tenga permisos suficientes para crear y gestionar clusters EKS.
+- Si Kibana no es accesible, verificar que el servicio de Kibana esté ejecutándose y tenga una IP externa asignada.
 
 ## Contribuciones
 
