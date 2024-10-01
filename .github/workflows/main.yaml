@@ -137,6 +137,16 @@ jobs:
         NODE_TYPE: ${{ env.NODE_TYPE }}
         NODE_COUNT: ${{ env.NODE_COUNT }}
 
+    - name: Get connection info
+      run: |
+          scp -i jenkins.pem -o StrictHostKeyChecking=no ubuntu@${{ needs.Deploy_CloudFormation.outputs.ec2_ip }}:/home/ubuntu/connection_info.txt ./connection_info.txt
+    
+    - name: Upload connection info
+      uses: actions/upload-artifact@v3
+      with:
+          name: connection-info
+          path: connection_info.txt
+
   Deploy_Nginx:
     needs: [Deploy_CloudFormation, Conexion_EC2]
     runs-on: ubuntu-latest
@@ -152,26 +162,14 @@ jobs:
     - name: Set permissions for SSH key
       run: chmod 600 jenkins.pem
 
-    - name: Configure kubectl on EC2
-      run: |
-        EC2_IP=${{ needs.Deploy_CloudFormation.outputs.ec2_ip }}
-        ssh -i jenkins.pem -o StrictHostKeyChecking=no ubuntu@$EC2_IP '
-        aws eks update-kubeconfig --name ${{ env.CLUSTER_NAME }} --region ${{ env.AWS_REGION }} && \
-        kubectl get nodes'
-        
     - name: Deploy Nginx
       run: |
         EC2_IP=${{ needs.Deploy_CloudFormation.outputs.ec2_ip }}
         # Copiar archivos al EC2        
         scp -i jenkins.pem -o StrictHostKeyChecking=no kubernetes/nginx-deployment.yaml kubernetes/nginx-service.yaml kubernetes/nginx-index-html-configmap.yaml ubuntu@$EC2_IP:~
-        
-        # Configurar kubectl en el EC2 y aplicar los archivos
-        ssh -i jenkins.pem -o StrictHostKeyChecking=no ubuntu@$EC2_IP '
-        
-        # Configurar kubectl para EKS
-        aws eks --region ${{ env.AWS_REGION }} update-kubeconfig --name ${{ env.CLUSTER_NAME }}
-        
+       
         # Aplicar los archivos
+        ssh -i jenkins.pem -o StrictHostKeyChecking=no ubuntu@$EC2_IP '
         kubectl apply -f nginx-index-html-configmap.yaml
         kubectl apply -f nginx-deployment.yaml
         kubectl apply -f nginx-service.yaml
@@ -184,36 +182,25 @@ jobs:
         kubectl get pods
         kubectl get services
         '
-
-    - name: Get Nginx Service URL
-      id: nginx-url
+        
+    - name: Update connection information
       run: |
           EC2_IP=${{ needs.Deploy_CloudFormation.outputs.ec2_ip }}
-          NGINX_URL=$(ssh -i jenkins.pem -o StrictHostKeyChecking=no ubuntu@$EC2_IP '
-            kubectl get service nginx-service -o jsonpath="{.status.loadBalancer.ingress[0].hostname}"
-          ')
-          echo "nginx_url=http://$NGINX_URL" >> $GITHUB_OUTPUT
-      
-    - name: Save connection information
+          ssh -i jenkins.pem -o StrictHostKeyChecking=no ubuntu@$EC2_IP '
+            NGINX_URL=$(kubectl get service nginx-service -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
+            echo "Nginx Service URL: http://$NGINX_URL" >> /home/ubuntu/connection_info.txt
+          '
+  
+    - name: Download updated connection info
       run: |
-          echo "EC2 Public IP: ${{ needs.Deploy_CloudFormation.outputs.ec2_ip }}" > connection_info.txt
-          echo "Nginx Service URL: ${{ steps.nginx-url.outputs.nginx_url }}" >> connection_info.txt
-          echo "To connect via SSH: ssh -i jenkins.pem ubuntu@${{ needs.Deploy_CloudFormation.outputs.ec2_ip }}" >> connection_info.txt
-
-    - name: Get Nginx Service IP
-      id: nginx-ip
-      run: |
-        EC2_IP=${{ needs.Deploy_CloudFormation.outputs.ec2_ip }}
-        NGINX_IP=$(ssh -i jenkins.pem -o StrictHostKeyChecking=no ubuntu@$EC2_IP 'kubectl get services nginx-service -o jsonpath="{.status.loadBalancer.ingress[0].hostname}"')
-        echo "nginx_ip=$NGINX_IP" >> $GITHUB_OUTPUT
-
+          scp -i jenkins.pem -o StrictHostKeyChecking=no ubuntu@${{ needs.Deploy_CloudFormation.outputs.ec2_ip }}:/home/ubuntu/connection_info.txt ./connection_info.txt
+  
     - name: Upload connection info
       uses: actions/upload-artifact@v3
       with:
         name: connection-info
         path: connection_info.txt
-     
-        
+       
   Deploy_EFK:
     needs: [Deploy_CloudFormation, Conexion_EC2, Deploy_Nginx]
     runs-on: ubuntu-latest

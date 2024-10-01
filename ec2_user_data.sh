@@ -109,14 +109,31 @@ echo "Installing Helm"
 curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 helm version
 
-# # Add Prometheus Helm repository
-# helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-# helm repo update
+# Add Prometheus Helm repository
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
 
-# # Install Grafana
-# helm repo add grafana https://grafana.github.io/helm-charts
-# helm repo update
-# helm install grafana grafana/grafana
+# Install Prometheus
+helm install prometheus prometheus-community/kube-prometheus-stack
+
+# Install Grafana (if not included in kube-prometheus-stack)
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+helm install grafana grafana/grafana
+
+# Get Grafana admin password
+GRAFANA_PASSWORD=$(kubectl get secret --namespace default grafana -o jsonpath="{.data.admin-password}" | base64 --decode)
+echo "Grafana admin password: $GRAFANA_PASSWORD" >> /home/ubuntu/connection_info.txt
+
+# Get service URLs
+NGINX_URL=$(kubectl get svc nginx-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+KIBANA_URL=$(kubectl get svc kibana -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+GRAFANA_URL=$(kubectl get svc grafana -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+
+# Save URLs to connection_info.txt
+echo "Nginx URL: http://$NGINX_URL" >> /home/ubuntu/connection_info.txt
+echo "Kibana URL: http://$KIBANA_URL" >> /home/ubuntu/connection_info.txt
+echo "Grafana URL: http://$GRAFANA_URL" >> /home/ubuntu/connection_info.txt
 
 # Asegurarse de que las configuraciones estén disponibles para el usuario ubuntu
 mkdir -p /home/ubuntu/.kube
