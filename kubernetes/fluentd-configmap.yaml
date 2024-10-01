@@ -6,24 +6,15 @@ data:
   fluent.conf: |
     <source>
       @type tail
-      path /var/log/containers/*.log
-      pos_file /var/log/fluentd-containers.log.pos
-      tag kubernetes.*
-      read_from_head true
-      <parse>
-        @type json
-        time_format %Y-%m-%dT%H:%M:%S.%NZ
-      </parse>
+      path /var/log/*.log
+      pos_file /var/log/fluentd.pos
+      tag app.log
+      format none
     </source>
 
-    <filter kubernetes.**>
-      @type kubernetes_metadata
-    </filter>
-
-    <match kubernetes.var.log.containers.**nginx**.log>
+    <match app.log>
       @type elasticsearch
       host elasticsearch
       port 9200
       logstash_format true
-      logstash_prefix nginx-logs
     </match>

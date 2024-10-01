@@ -14,10 +14,7 @@ spec:
     spec:
       containers:
       - name: kibana
-        image: docker.elastic.co/kibana/kibana:7.13.0
-        env:
-        - name: ELASTICSEARCH_HOSTS
-          value: http://elasticsearch:9200
+        image: kibana:7.13.1
         ports:
         - containerPort: 5601
 ---
@@ -26,9 +23,8 @@ kind: Service
 metadata:
   name: kibana
 spec:
-  selector:
-    app: kibana
+  type: LoadBalancer
   ports:
     - port: 5601
-      targetPort: 5601
-  type: LoadBalancer
+  selector:
+    app: kibana

@@ -267,6 +267,33 @@ jobs:
           
           cat connection_info.txt
   
+    - name: Get Prometheus Service URL
+      id: prometheus-url
+      run: |
+          EC2_IP=${{ needs.Deploy_CloudFormation.outputs.ec2_ip }}
+          PROMETHEUS_URL=$(ssh -i jenkins.pem -o StrictHostKeyChecking=no ubuntu@$EC2_IP '
+          kubectl get service prometheus -o jsonpath="{.status.loadBalancer.ingress[0].hostname}"
+          ')
+          echo "prometheus_url=http://$PROMETHEUS_URL" >> $GITHUB_OUTPUT
+  
+    - name: Get Grafana Service URL
+      id: grafana-url
+      run: |
+          EC2_IP=${{ needs.Deploy_CloudFormation.outputs.ec2_ip }}
+          GRAFANA_URL=$(ssh -i jenkins.pem -o StrictHostKeyChecking=no ubuntu@$EC2_IP '
+          kubectl get service grafana -o jsonpath="{.status.loadBalancer.ingress[0].hostname}"
+          ')
+          echo "grafana_url=http://$GRAFANA_URL" >> $GITHUB_OUTPUT
+  
+    - name: Update connection information
+      run: |
+          EC2_IP=${{ needs.Deploy_CloudFormation.outputs.ec2_ip }}
+          PROMETHEUS_URL=${{ steps.prometheus-url.outputs.prometheus_url }}
+          GRAFANA_URL=${{ steps.grafana-url.outputs.grafana_url }}
+  
+          echo "Prometheus URL: $PROMETHEUS_URL" >> connection_info.txt
+          echo "Grafana URL: $GRAFANA_URL" >> connection_info.txt
+  
     - name: Upload updated connection info
       uses: actions/upload-artifact@v3
       with:
@@ -299,3 +326,11 @@ jobs:
       run: |
         chmod +x setup_remote_access.sh
         ./setup_remote_access.sh
+        
+    - name: Verify Service URLs
+      run: |
+          echo "Verifying URLs..."
+          curl -s -o /dev/null -w "%{http_code}" ${{ steps.nginx-url.outputs.nginx_url }} && echo "Nginx is accessible."
+          curl -s -o /dev/null -w "%{http_code}" ${{ steps.kibana-url.outputs.kibana_url }} && echo "Kibana is accessible."
+          curl -s -o /dev/null -w "%{http_code}" ${{ steps.prometheus-url.outputs.prometheus_url }} && echo "Prometheus is accessible."
+          curl -s -o /dev/null -w "%{http_code}" ${{ steps.grafana-url.outputs.grafana_url }} && echo "Grafana is accessible."

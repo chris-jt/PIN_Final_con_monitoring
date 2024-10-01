@@ -14,21 +14,17 @@ spec:
     spec:
       containers:
       - name: grafana
-        image: grafana/grafana:8.2.2
+        image: grafana/grafana
         ports:
         - containerPort: 3000
-        env:
-        - name: GF_SECURITY_ADMIN_PASSWORD
-          value: "admin"  # Cambia esto a una contraseña segura
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: grafana
 spec:
-  selector:
-    app: grafana
   type: LoadBalancer
   ports:
-    - port: 80
-      targetPort: 3000
+    - port: 3000
+  selector:
+    app: grafana

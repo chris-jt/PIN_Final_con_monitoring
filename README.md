@@ -13,12 +13,10 @@ Este proyecto automatiza el despliegue de un cluster Amazon EKS (Elastic Kuberne
 │ ├── elasticsearch-deployment.yaml
 │ ├── fluentd-configmap.yaml
 │ ├── fluentd-deployment.yaml
-│ ├── grafana-deployment.yaml
 │ ├── kibana-deployment.yaml
 │ ├── nginx-index-html-configmap.yaml
 │ ├── nginx-deployment.yaml
 │ ├── nginx-service.yaml
-│ └── prometheus-deployment.yaml
 ├── ec2_user_data.sh
 ├── setup_remote_access.sh
 └── README.md
@@ -66,7 +64,7 @@ Este proyecto automatiza el despliegue de un cluster Amazon EKS (Elastic Kuberne
 
 1. Después de que el flujo de trabajo se complete, descarga el archivo `jenkins.pem` de los artefactos del flujo de trabajo.
 2. SSH a la instancia EC2:
-    ssh -i jenkins.pem ubuntu@<IP_PUBLICA_EC2>
+    ssh -i jenkins.pem ubuntu@<IP_PUBLICA_EC2> ubuntu@34.226.208.69
 
 3. Usar comandos `kubectl` para interactuar con el cluster:
     kubectl get nodes

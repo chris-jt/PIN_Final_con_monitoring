@@ -109,12 +109,18 @@ echo "Installing Helm"
 curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 helm version
 
-# Add Prometheus Helm repository
+# Instalar EFK (Elasticsearch, Fluentd, Kibana)
+kubectl apply -f https://raw.githubusercontent.com/elastic/helm-charts/main/elasticsearch/values.yaml
+kubectl apply -f https://raw.githubusercontent.com/elastic/helm-charts/main/kibana/values.yaml
+kubectl apply -f https://raw.githubusercontent.com/elastic/helm-charts/main/fluentd/values.yaml
+
+# Agregar repositorio de Helm para Prometheus y Grafana
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
 
-# Install Prometheus
-helm install prometheus prometheus-community/kube-prometheus-stack
+# Instalar Prometheus
+helm install prometheus prometheus-community/prometheus
 
 # Install Grafana (if not included in kube-prometheus-stack)
 helm repo add grafana https://grafana.github.io/helm-charts
