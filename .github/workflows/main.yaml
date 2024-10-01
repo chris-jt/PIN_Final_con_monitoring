@@ -206,47 +206,14 @@ jobs:
         EC2_IP=${{ needs.Deploy_CloudFormation.outputs.ec2_ip }}
         NGINX_IP=$(ssh -i jenkins.pem -o StrictHostKeyChecking=no ubuntu@$EC2_IP 'kubectl get services nginx-service -o jsonpath="{.status.loadBalancer.ingress[0].hostname}"')
         echo "nginx_ip=$NGINX_IP" >> $GITHUB_OUTPUT
-    
-    - name: Deploy Prometheus and Grafana
-      run: |
-        EC2_IP=${{ needs.Deploy_CloudFormation.outputs.ec2_ip }}
-        ssh -i jenkins.pem -o StrictHostKeyChecking=no ubuntu@$EC2_IP '
-        # Configurar kubectl para EKS (por si acaso)
-        aws eks --region ${{ env.AWS_REGION }} update-kubeconfig --name ${{ env.CLUSTER_NAME }}
-    
-        # Copiar los archivos YAML al EC2
-        scp -i jenkins.pem -o StrictHostKeyChecking=no kubernetes/prometheus-deployment.yaml kubernetes/grafana-deployment.yaml ubuntu@$EC2_IP:~
-    
-        # Aplicar los archivos de despliegue
-        kubectl apply -f prometheus-deployment.yaml
-        kubectl apply -f grafana-deployment.yaml
-
-        # Esperar a que los deployments estén listos
-        kubectl rollout status deployment/prometheus
-        kubectl rollout status deployment/grafana
-    
-        # Obtener las URLs de Prometheus y Grafana
-        PROMETHEUS_URL=$(kubectl get svc prometheus -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
-        GRAFANA_URL=$(kubectl get svc grafana -o jsonpath="{.status.loadBalancer.ingress[0].hostname}")
-
-        # Obtener la contraseña de administrador de Grafana (asumiendo que está en un secreto)
-        GRAFANA_PASSWORD=$(kubectl get secret grafana -o jsonpath="{.data.admin-password}" | base64 --decode)
-
-        # Añadir las URLs y la contraseña al archivo de conexión
-        echo "Prometheus URL: http://$PROMETHEUS_URL:9090" >> connection-info.txt
-        echo "Grafana URL: http://$GRAFANA_URL" >> connection-info.txt
-        echo "Grafana admin password: $GRAFANA_PASSWORD" >> connection-info.txt
-        '
-
-        # Copiar el archivo de conexión actualizado de vuelta a la máquina del flujo de trabajo
-        scp -i jenkins.pem ubuntu@$EC2_IP:~/connection-info.txt .
 
     - name: Upload connection info
       uses: actions/upload-artifact@v3
       with:
         name: connection-info
-        path: connection-info.txt
-
+        path: connection_info.txt
+     
+        
   Deploy_EFK:
     needs: [Deploy_CloudFormation, Conexion_EC2, Deploy_Nginx]
     runs-on: ubuntu-latest
