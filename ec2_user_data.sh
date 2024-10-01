@@ -109,14 +109,14 @@ echo "Installing Helm"
 curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 helm version
 
-# Add Prometheus Helm repository
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
+# # Add Prometheus Helm repository
+# helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+# helm repo update
 
-# Install Grafana
-helm repo add grafana https://grafana.github.io/helm-charts
-helm repo update
-helm install grafana grafana/grafana
+# # Install Grafana
+# helm repo add grafana https://grafana.github.io/helm-charts
+# helm repo update
+# helm install grafana grafana/grafana
 
 # Asegurarse de que las configuraciones estén disponibles para el usuario ubuntu
 mkdir -p /home/ubuntu/.kube
