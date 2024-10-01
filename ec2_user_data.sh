@@ -4,7 +4,7 @@ set -x
 # Variables de entorno
 export CLUSTER_NAME=${CLUSTER_NAME:-"cluster-PIN"}
 export AWS_REGION=${AWS_REGION:-"us-east-1"}
-export NODE_TYPE=${NODE_TYPE:-"t3.medium"}
+export NODE_TYPE=${NODE_TYPE:-"t3.large"}
 export NODE_COUNT=${NODE_COUNT:-2}
 
 # Función para esperar a que apt esté disponible
