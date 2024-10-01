@@ -129,5 +129,4 @@ echo 'export PATH=$PATH:/usr/local/bin' >> /home/ubuntu/.bashrc
 source /home/ubuntu/.bashrc
 
 aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION
-
 echo "All necessary tools have been installed and cluster is ready."
