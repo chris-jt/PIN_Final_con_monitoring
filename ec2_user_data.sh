@@ -119,26 +119,24 @@ helm repo add prometheus-community https://prometheus-community.github.io/helm-c
 helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
 
-# Instalar Prometheus
-helm install prometheus prometheus-community/prometheus
+# Instalar Prometheus y Grafana
+log "INSTALANDO Prometheus y Grafana..."
+helm install prometheus prometheus-community/prometheus || handle_error "No se pudo instalar Prometheus"
+helm install grafana grafana/grafana || handle_error "No se pudo instalar Grafana"
 
-# Install Grafana (if not included in kube-prometheus-stack)
-helm repo add grafana https://grafana.github.io/helm-charts
-helm repo update
-helm install grafana grafana/grafana
+# Instalar Prometheus y Grafana
+log "INSTALANDO Prometheus y Grafana..."
+helm install prometheus prometheus-community/prometheus || handle_error "No se pudo instalar Prometheus"
+helm install grafana grafana/grafana || handle_error "No se pudo instalar Grafana"
 
-# Get Grafana admin password
-GRAFANA_PASSWORD=$(kubectl get secret --namespace default grafana -o jsonpath="{.data.admin-password}" | base64 --decode)
-echo "Grafana admin password: $GRAFANA_PASSWORD" >> /home/ubuntu/connection_info.txt
-
-# Get service URLs
+# Obtener URLs de servicios
 NGINX_URL=$(kubectl get svc nginx-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-KIBANA_URL=$(kubectl get svc kibana -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+PROMETHEUS_URL=$(kubectl get svc prometheus-server -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
 GRAFANA_URL=$(kubectl get svc grafana -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
 
-# Save URLs to connection_info.txt
+# Guardar URLs en connection_info.txt
 echo "Nginx URL: http://$NGINX_URL" >> /home/ubuntu/connection_info.txt
-echo "Kibana URL: http://$KIBANA_URL" >> /home/ubuntu/connection_info.txt
+echo "Prometheus URL: http://$PROMETHEUS_URL" >> /home/ubuntu/connection_info.txt
 echo "Grafana URL: http://$GRAFANA_URL" >> /home/ubuntu/connection_info.txt
 
 # Asegurarse de que las configuraciones estén disponibles para el usuario ubuntu

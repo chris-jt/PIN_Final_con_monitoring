@@ -237,6 +237,26 @@ jobs:
           kubectl get services
         '
     
+        # Instalar Prometheus y Grafana
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add grafana https://grafana.github.io/helm-charts
+          helm repo update
+          
+          # Instalar Prometheus y Grafana
+          helm install prometheus prometheus-community/prometheus
+          helm install grafana grafana/grafana
+
+          # Obtener la contraseña de Grafana
+          GRAFANA_PASSWORD=$(kubectl get secret --namespace default grafana -o jsonpath="{.data.admin-password}" | base64 --decode)
+          echo "Grafana admin password: $GRAFANA_PASSWORD" >> /home/ubuntu/connection_info.txt
+
+          # Guardar URLs de servicios
+          PROMETHEUS_URL=$(kubectl get svc prometheus-server -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          GRAFANA_URL=$(kubectl get svc grafana -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          echo "Prometheus URL: http://$PROMETHEUS_URL" >> /home/ubuntu/connection_info.txt
+          echo "Grafana URL: http://$GRAFANA_URL" >> /home/ubuntu/connection_info.txt
+        '
+
     - name: Get Kibana Service URL
       id: kibana-url
       run: |
@@ -267,6 +287,13 @@ jobs:
           
           cat connection_info.txt
   
+    - name: Wait for Prometheus pod to be ready
+      run: |
+            EC2_IP=${{ needs.Deploy_CloudFormation.outputs.ec2_ip }}
+            ssh -i jenkins.pem -o StrictHostKeyChecking=no ubuntu@$EC2_IP '
+            kubectl wait --for=condition=ready pod -l app=prometheus --timeout=300s
+            '        
+
     - name: Get Prometheus Service URL
       id: prometheus-url
       run: |
@@ -326,7 +353,7 @@ jobs:
       run: |
         chmod +x setup_remote_access.sh
         ./setup_remote_access.sh
-        
+
     - name: Verify Service URLs
       run: |
           echo "Verifying URLs..."
