@@ -124,11 +124,6 @@ log "INSTALANDO Prometheus y Grafana..."
 helm install prometheus prometheus-community/prometheus || handle_error "No se pudo instalar Prometheus"
 helm install grafana grafana/grafana || handle_error "No se pudo instalar Grafana"
 
-# Instalar Prometheus y Grafana
-log "INSTALANDO Prometheus y Grafana..."
-helm install prometheus prometheus-community/prometheus || handle_error "No se pudo instalar Prometheus"
-helm install grafana grafana/grafana || handle_error "No se pudo instalar Grafana"
-
 # Obtener URLs de servicios
 NGINX_URL=$(kubectl get svc nginx-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
 PROMETHEUS_URL=$(kubectl get svc prometheus-server -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')

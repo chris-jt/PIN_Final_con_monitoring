@@ -5,7 +5,7 @@ on:
 
 env:
   AWS_REGION: us-east-1  # Cambia esto por tu región
-  CLUSTER_NAME: <NOMBRE_CLUSTER>  # Cambia esto por el nombre de tu clúster
+  CLUSTER_NAME: cluster-PIN  # Cambia esto por el nombre de tu clúster
 
 jobs:
   cleanup:

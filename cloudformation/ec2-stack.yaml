@@ -21,7 +21,7 @@ Resources:
   JenkinsSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Enable SSH and Jenkins port
+      GroupDescription: Permitir SSH, Jenkins, Kibana, Grafana y Prometheus
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
@@ -31,6 +31,18 @@ Resources:
           FromPort: 8080
           ToPort: 8080
           CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5601
+          ToPort: 5601
+          CidrIp: 0.0.0.0/0  # Puerto de Kibana
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          CidrIp: 0.0.0.0/0  # Puerto de Grafana
+        - IpProtocol: tcp
+          FromPort: 9090
+          ToPort: 9090
+          CidrIp: 0.0.0.0/0  # Puerto de Prometheus
 
   JenkinsKeyPair:
     Type: AWS::EC2::KeyPair
